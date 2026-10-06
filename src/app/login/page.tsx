@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, Suspense } from "react";
+import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -39,31 +40,22 @@ function LoginInner() {
   const callbackUrl = params.get("callbackUrl") ?? "/";
   const [error, setError] = useState<string | null>(null);
 
-  const handleGoogleLogin = async () => {
-    setBusy(true);
-    setError(null);
-    try {
-      // Check if Google OAuth is configured server-side
-      const cfgResp = await fetch("/api/auth/config", { cache: "no-store" });
-      const cfg = await cfgResp.json();
-      setAuthConfigured(Boolean(cfg.googleConfigured));
-      if (!cfg.googleConfigured) {
-        setError(
-          "Google authentication is not fully configured. Set GOOGLE_CLIENT_SECRET and AUTH_SECRET environment variables to enable Google login. Use Admin login to test the dashboard.",
-        );
-        setBusy(false);
-        return;
-      }
-      // Store the selected role in a cookie so the JWT callback can read it
-      document.cookie = `vride_signup_role=${role}; path=/; max-age=600; SameSite=Lax`;
-      // Redirect to NextAuth Google sign-in
-      const signInUrl = `/api/auth/signin/google?callbackUrl=${encodeURIComponent(callbackUrl)}`;
-      window.location.href = signInUrl;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed");
-      setBusy(false);
-    }
-  };
+ const handleGoogleLogin = async () => {
+  setBusy(true);
+  setError(null);
+
+  try {
+    document.cookie = `vride_signup_role=${role}; path=/; max-age=600; SameSite=Lax`;
+
+    await signIn("google", {
+      callbackUrl,
+      redirect: true,
+    });
+  } catch (err) {
+    setError(err instanceof Error ? err.message : "Login failed");
+    setBusy(false);
+  }
+};
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-ink-50">
