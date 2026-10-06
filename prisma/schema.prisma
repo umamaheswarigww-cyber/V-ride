@@ -1,0 +1,39 @@
+// V-Ride Prisma schema — extended with full auth + customer model.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String   @id @default(cuid())
+  googleId        String?  @unique
+  email           String   @unique
+  name            String?
+  picture         String?
+  emailVerified   Boolean  @default(false)
+  isVitApStudent  Boolean  @default(false)
+  role            String   @default("student") // "student" | "driver"
+  firstLoginAt    DateTime @default(now())
+  lastLoginAt     DateTime @default(now())
+  loginCount      Int      @default(1)
+  rating          Float    @default(4.9)
+  totalRides      Int      @default(0)
+  completedRides  Int      @default(0)
+  cancelledRides Int      @default(0)
+  moneySaved      Int      @default(0)
+  co2SavedKg      Float    @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations to V-Ride activity (kept simple for prototype)
+  ridesJoined     Int      @default(0)
+  ridesOffered    Int      @default(0)
+
+  @@index([isVitApStudent])
+  @@index([lastLoginAt])
+}
